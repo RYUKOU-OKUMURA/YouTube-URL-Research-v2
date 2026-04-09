@@ -37,7 +37,7 @@
 
     .container {
       width: 100%;
-      max-width: 980px;
+      max-width: 1080px;
       background: var(--card-bg);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow);
@@ -70,22 +70,21 @@
     header h1 {
       font-size: clamp(1.9rem, 3vw, 2.3rem);
       margin: 0;
-      color: var(--text-main);
       font-weight: 700;
       letter-spacing: -0.02em;
     }
 
     header p {
       margin: 0;
+      max-width: 760px;
       color: var(--text-sub);
-      max-width: 680px;
       font-size: 0.95rem;
-      line-height: 1.7;
+      line-height: 1.75;
     }
 
     form {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 18px 24px;
       background: rgba(250, 251, 255, 0.85);
       border: 1px solid var(--border);
@@ -106,6 +105,13 @@
 
     #keyword-options {
       display: grid;
+      gap: 18px;
+    }
+
+    .triple-grid,
+    .range-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 18px;
     }
 
@@ -144,12 +150,6 @@
       outline: none;
       border-color: var(--accent);
       box-shadow: 0 0 0 4px var(--accent-soft);
-    }
-
-    .range-group {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-      gap: 18px;
     }
 
     .field-hint {
@@ -273,7 +273,7 @@
 
     .results-list {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       gap: 18px;
       min-height: 160px;
     }
@@ -364,13 +364,15 @@
       padding: 4px 0;
     }
 
-    .result-stats {
+    .result-stats,
+    .reason-chips {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
     }
 
-    .stat-pill {
+    .stat-pill,
+    .reason-chip {
       display: inline-flex;
       align-items: center;
       gap: 6px;
@@ -386,6 +388,12 @@
     .stat-pill strong {
       color: var(--accent-dark);
       font-weight: 700;
+    }
+
+    .reason-chip {
+      background: rgba(255, 61, 90, 0.08);
+      border-color: rgba(255, 61, 90, 0.15);
+      color: var(--accent-dark);
     }
 
     .result-link {
@@ -451,7 +459,7 @@
   <div class="container">
     <header>
       <h1>YouTube URL Getter</h1>
-      <p>チャンネルIDがなくても、検索キーワードだけでYouTube全体を横断リサーチできます。公開期間、再生数、高評価数、並び順、取得件数を指定して、狙った動画のURLをまとめて取得できます。</p>
+      <p>キーワード検索だけでなく、必須語・除外語・完全一致フレーズ・厳密度を使って曖昧語のノイズを削れます。Obsidian や Google AI Studio のような多義語でも、YouTubeの候補を広めに集めてから精度優先で再ランキングします。</p>
     </header>
 
     <form id="search-form" onsubmit="return false;">
@@ -466,21 +474,50 @@
       <div class="form-group">
         <label for="channel-id-input">チャンネルID <small id="channel-requirement">optional</small></label>
         <input type="text" id="channel-id-input" value="UCVAkt5l6kD4igMdVoEGTGIg" placeholder="例: UCxxxxxxxxxxxx">
-        <span id="channel-hint" class="field-hint">空欄ならYouTube全体から検索します。全動画取得では必須です。</span>
+        <span class="field-hint">空欄ならYouTube全体から検索します。全動画取得では必須です。</span>
       </div>
 
       <div id="keyword-options" class="form-group full-row">
         <div class="form-group">
           <label for="keyword-input">検索キーワード <small id="keyword-requirement">recommended</small></label>
-          <input type="text" id="keyword-input" placeholder="例: 首こり ストレッチ, 肩こり -shorts">
-          <span class="field-hint">チャンネルIDなしのときは必須です。YouTube API準拠の除外ワードや OR 検索も使えます。</span>
+          <input type="text" id="keyword-input" placeholder="例: Obsidian, Google AI Studio">
+          <span class="field-hint">曖昧語だけでも検索できますが、下の必須語・除外語・完全一致フレーズを足すと精度が上がります。</span>
         </div>
+      </div>
+
+      <div class="form-group full-row">
+        <div class="triple-grid">
+          <div class="form-group">
+            <label for="required-terms-input">必須語</label>
+            <input type="text" id="required-terms-input" placeholder="例: notes, markdown, vault">
+            <span class="field-hint">カンマ区切り。結果に必ず含めたい語です。</span>
+          </div>
+          <div class="form-group">
+            <label for="excluded-terms-input">除外語</label>
+            <input type="text" id="excluded-terms-input" placeholder="例: game, movie, soundtrack">
+            <span class="field-hint">カンマ区切り。ノイズ候補を落とします。</span>
+          </div>
+          <div class="form-group">
+            <label for="exact-phrases-input">完全一致フレーズ</label>
+            <input type="text" id="exact-phrases-input" placeholder="例: Google AI Studio">
+            <span class="field-hint">カンマ区切り。固有名詞の文脈を強く寄せます。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="strictness-select">厳密度</label>
+        <select id="strictness-select">
+          <option value="precision" selected>精度優先</option>
+          <option value="balanced">バランス</option>
+          <option value="recall">網羅優先</option>
+        </select>
       </div>
 
       <div class="form-group">
         <label for="sort-order-select">並び順</label>
         <select id="sort-order-select">
-          <option value="relevance" data-search-only="true">関連度順</option>
+          <option value="relevance" data-search-only="true" selected>関連度順</option>
           <option value="date">公開日順</option>
           <option value="viewCount">再生数順</option>
           <option value="title">タイトル順</option>
@@ -494,9 +531,26 @@
           <option value="25" selected>25件</option>
           <option value="50">50件</option>
           <option value="100">100件</option>
-          <option value="200">200件</option>
+          <option value="150">150件</option>
         </select>
-        <span class="field-hint">条件が厳しい場合は、YouTube APIの上限内で追加ページも探索します。</span>
+      </div>
+
+      <div class="form-group">
+        <label for="relevance-language-select">言語</label>
+        <select id="relevance-language-select">
+          <option value="" selected>自動</option>
+          <option value="ja">日本語</option>
+          <option value="en">英語</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="region-code-select">地域</label>
+        <select id="region-code-select">
+          <option value="" selected>指定なし</option>
+          <option value="JP">JP</option>
+          <option value="US">US</option>
+        </select>
       </div>
 
       <div class="form-group full-row">
@@ -544,7 +598,7 @@
 
       <div class="actions">
         <button id="submit-btn" class="submit-btn" type="submit">動画を取得する</button>
-        <span id="loader">取得中です…。条件が多いほど少し時間がかかります。</span>
+        <span id="loader">取得中です…。候補を広めに集めてから再ランキングしています。</span>
       </div>
     </form>
 
@@ -572,8 +626,14 @@
     const keywordRequirement = document.getElementById('keyword-requirement');
     const keywordOptions = document.getElementById('keyword-options');
     const keywordInput = document.getElementById('keyword-input');
+    const requiredTermsInput = document.getElementById('required-terms-input');
+    const excludedTermsInput = document.getElementById('excluded-terms-input');
+    const exactPhrasesInput = document.getElementById('exact-phrases-input');
+    const strictnessSelect = document.getElementById('strictness-select');
     const sortOrderSelect = document.getElementById('sort-order-select');
     const maxResultsSelect = document.getElementById('max-results-select');
+    const relevanceLanguageSelect = document.getElementById('relevance-language-select');
+    const regionCodeSelect = document.getElementById('region-code-select');
     const dateAfterInput = document.getElementById('date-after-input');
     const dateBeforeInput = document.getElementById('date-before-input');
     const minViewsInput = document.getElementById('min-views-input');
@@ -704,6 +764,12 @@
         action: actionSelect.value,
         channelId: channelIdInput.value.trim(),
         searchQuery: keywordInput.value.trim(),
+        requiredTerms: parseListInput(requiredTermsInput.value),
+        excludedTerms: parseListInput(excludedTermsInput.value),
+        exactPhrases: parseListInput(exactPhrasesInput.value),
+        strictness: strictnessSelect.value,
+        relevanceLanguage: relevanceLanguageSelect.value,
+        regionCode: regionCodeSelect.value,
         publishedAfter: dateAfterInput.value,
         publishedBefore: dateBeforeInput.value,
         minViews: parseOptionalInteger(minViewsInput.value),
@@ -719,6 +785,12 @@
       return {
         channelId: request.channelId,
         searchQuery: request.searchQuery,
+        requiredTerms: request.requiredTerms,
+        excludedTerms: request.excludedTerms,
+        exactPhrases: request.exactPhrases,
+        strictness: request.strictness,
+        relevanceLanguage: request.relevanceLanguage,
+        regionCode: request.regionCode,
         publishedAfter: request.publishedAfter,
         publishedBefore: request.publishedBefore,
         minViews: request.minViews,
@@ -735,8 +807,8 @@
         return 'チャンネルの全動画を取得する場合は、チャンネルIDを入力してください。';
       }
 
-      if (request.action === 'search' && !request.channelId && !request.searchQuery) {
-        return 'YouTube全体を検索する場合は、検索キーワードを入力してください。';
+      if (request.action === 'search' && !request.channelId && !hasPositiveSearchIntent(request)) {
+        return 'YouTube全体を検索する場合は、検索キーワード・必須語・完全一致フレーズのいずれかを入力してください。';
       }
 
       if (request.publishedAfter && request.publishedBefore && request.publishedAfter > request.publishedBefore) {
@@ -751,6 +823,23 @@
       }
 
       return '';
+    }
+
+    function hasPositiveSearchIntent(request) {
+      return Boolean(request.searchQuery)
+        || request.requiredTerms.length > 0
+        || request.exactPhrases.length > 0;
+    }
+
+    function parseListInput(value) {
+      if (!value) {
+        return [];
+      }
+      return value
+        .split(/[,\n]/)
+        .map(item => item.trim())
+        .filter(Boolean)
+        .filter((item, index, items) => items.indexOf(item) === index);
     }
 
     function validateNumericRange(minValue, maxValue, label) {
@@ -862,6 +951,9 @@
         if (video.channelTitle) {
           meta.appendChild(createMetaItem(video.channelTitle));
         }
+        if (video.matchedProfile) {
+          meta.appendChild(createMetaItem(`profile: ${video.matchedProfile}`));
+        }
 
         const stats = document.createElement('div');
         stats.className = 'result-stats';
@@ -869,6 +961,25 @@
         stats.appendChild(createStatPill('高評価', video.likeCount === null ? '非公開' : formatCount(video.likeCount)));
         if (video.commentCount !== null) {
           stats.appendChild(createStatPill('コメント', formatCount(video.commentCount)));
+        }
+        if (Number(video.relevanceScore) > 0) {
+          stats.appendChild(createStatPill('適合度', formatCount(video.relevanceScore)));
+        }
+
+        card.appendChild(title);
+        card.appendChild(meta);
+        card.appendChild(stats);
+
+        if (Array.isArray(video.relevanceReasons) && video.relevanceReasons.length > 0) {
+          const reasons = document.createElement('div');
+          reasons.className = 'reason-chips';
+          video.relevanceReasons.slice(0, 3).forEach(reason => {
+            const chip = document.createElement('span');
+            chip.className = 'reason-chip';
+            chip.textContent = reason;
+            reasons.appendChild(chip);
+          });
+          card.appendChild(reasons);
         }
 
         const link = document.createElement('a');
@@ -878,9 +989,6 @@
         link.className = 'result-link';
         link.textContent = '動画を開く';
 
-        card.appendChild(title);
-        card.appendChild(meta);
-        card.appendChild(stats);
         card.appendChild(link);
         resultsList.appendChild(card);
       });
