@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <title>YouTube URL Getter</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    :root {
+      color-scheme: light;
+      --accent: #ff3d5a;
+      --accent-dark: #e02f49;
+      --accent-soft: rgba(255, 61, 90, 0.1);
+      --bg: #f5f7fb;
+      --card-bg: #ffffff;
+      --border: #e3e7ee;
+      --text-main: #1e2a39;
+      --text-sub: #54607a;
+      --shadow: 0 20px 45px rgba(20, 30, 50, 0.12);
+      --radius-lg: 18px;
+      --radius-md: 12px;
+      --radius-sm: 8px;
+      --transition: 0.25s ease;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top, rgba(255, 61, 90, 0.07), transparent 45%), var(--bg);
+      margin: 0;
+      padding: 40px 24px 80px;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      color: var(--text-main);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 880px;
+      background: var(--card-bg);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+      padding: 48px 56px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .container::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(135deg, rgba(255, 61, 90, 0.12), transparent 55%);
+      opacity: 0.8;
+    }
+
+    .container > * { position: relative; z-index: 1; }
+
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+
+    header h1 {
+      font-size: clamp(1.9rem, 3vw, 2.3rem);
+      margin: 0;
+      color: var(--text-main);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      margin: 0;
+      color: var(--text-sub);
+      max-width: 520px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px 24px;
+      background: rgba(250, 251, 255, 0.85);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 28px 32px;
+      margin-bottom: 28px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .form-group.full-row {
+      grid-column: 1 / -1;
+    }
+
+    #search-options {
+      display: grid;
+      gap: 18px;
+    }
+
+    label {
+      font-weight: 600;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    label small {
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    select {
+      width: 100%;
+      padding: 13px 16px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      transition: border-color var(--transition), box-shadow var(--transition);
+      background: #fff;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+
+    .date-range-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 18px;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      grid-column: 1 / -1;
+    }
+
+    .submit-btn {
+      flex: 1;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: transform var(--transition), box-shadow var(--transition);
+      box-shadow: 0 12px 24px rgba(255, 61, 90, 0.22);
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 30px rgba(255, 61, 90, 0.28);
+    }
+
+    .submit-btn:disabled {
+      background: linear-gradient(135deg, #c7ccd7, #b2b7c3);
+      box-shadow: none;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .results-area {
+      margin-top: 36px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .results-header {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .results-header h2 {
+      margin: 0;
+      font-size: 1.35rem;
+      letter-spacing: -0.01em;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #results-count {
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+
+    .ghost-btn,
+    .outline-btn,
+    .danger-btn {
+      border-radius: var(--radius-sm);
+      padding: 9px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition), border-color var(--transition);
+    }
+
+    .outline-btn {
+      border: 1px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+    }
+
+    .outline-btn:hover {
+      background: var(--accent-soft);
+    }
+
+    .ghost-btn {
+      border: 1px solid transparent;
+      background: rgba(20, 30, 50, 0.06);
+      color: var(--text-main);
+    }
+
+    .ghost-btn:hover {
+      background: rgba(20, 30, 50, 0.12);
+    }
+
+    .danger-btn {
+      border: 1px solid transparent;
+      background: rgba(255, 61, 90, 0.14);
+      color: var(--accent-dark);
+    }
+
+    .danger-btn:hover {
+      background: rgba(255, 61, 90, 0.2);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+
+    .results-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 18px;
+      min-height: 160px;
+    }
+
+    .result-card {
+      background: rgba(250, 251, 255, 0.9);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+    }
+
+    .result-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 61, 90, 0.2);
+      box-shadow: 0 12px 26px rgba(20, 30, 50, 0.14);
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin-bottom: 8px;
+      gap: 12px;
+    }
+
+    .card-top.with-checkbox {
+      justify-content: space-between;
+    }
+
+    .select-wrapper {
+      display: none;
+      align-items: center;
+    }
+
+    .select-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .dismiss-btn {
+      border: none;
+      background: rgba(20, 30, 50, 0.06);
+      color: var(--text-sub);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      font-size: 1rem;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    .dismiss-btn:hover {
+      background: rgba(255, 61, 90, 0.18);
+      color: var(--accent-dark);
+    }
+
+    .result-card h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-main);
+      word-break: break-word;
+    }
+
+    .result-meta {
+      font-size: 0.8rem;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .result-link {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .result-link::after {
+      content: '↗';
+      font-size: 0.85rem;
+    }
+
+    .placeholder {
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-md);
+      padding: 36px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      color: var(--text-sub);
+      gap: 10px;
+    }
+
+    .placeholder strong {
+      color: var(--text-main);
+      font-size: 1rem;
+    }
+
+    #loader,
+    #error-message {
+      text-align: left;
+      min-height: 1.5em;
+      font-size: 0.95rem;
+    }
+
+    #loader {
+      color: var(--text-sub);
+      display: none;
+    }
+
+    #error-message {
+      color: #d93025;
+      font-weight: 600;
+    }
+
+    @media (max-width: 720px) {
+      body { padding: 24px 16px 64px; }
+      .container { padding: 32px 24px; }
+      form { grid-template-columns: 1fr; padding: 24px; }
+      .actions { flex-direction: column; align-items: stretch; }
+      .submit-btn { width: 100%; }
+      .results-list { grid-template-columns: 1fr; }
+      .controls { width: 100%; justify-content: flex-end; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>YouTube URL Getter</h1>
+      <p>チャンネルの動画URLとタイトルを素早く収集。キーワードや公開日に基づくフィルタで、目的の動画をピンポイントに見つけましょう。</p>
+    </header>
+
+    <form id="search-form" onsubmit="return false;">
+      <div class="form-group">
+        <label for="action-select">実行するアクション</label>
+        <select id="action-select">
+          <option value="search">キーワードと公開日で検索</option>
+          <option value="all">チャンネルの全動画を取得</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="channel-id-input">チャンネルID <small>required</small></label>
+        <input type="text" id="channel-id-input" value="UCVAkt5l6kD4igMdVoEGTGIg" placeholder="例: UCxxxxxxxxxxxx">
+      </div>
+
+      <div id="search-options" class="form-group full-row">
+        <div class="form-group">
+          <label for="keyword-input">検索キーワード</label>
+          <input type="text" id="keyword-input" placeholder="例: 首こり, テクニック">
+        </div>
+        <div class="form-group">
+          <label>公開日で絞り込み</label>
+          <div class="date-range-group">
+            <div>
+              <label for="date-after-input">開始日</label>
+              <input type="date" id="date-after-input">
+            </div>
+            <div>
+              <label for="date-before-input">終了日</label>
+              <input type="date" id="date-before-input">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="submit-btn" class="submit-btn" type="submit">動画を取得する</button>
+        <span id="loader">取得中です…。少々お待ちください。</span>
+      </div>
+    </form>
+
+    <div id="error-message"></div>
+
+    <div class="results-area">
+      <div class="results-header">
+        <h2>結果</h2>
+        <div class="controls">
+          <span id="results-count">0件</span>
+          <button id="toggle-select-btn" class="ghost-btn" style="display: none;">選択モード</button>
+          <button id="delete-selected-btn" class="danger-btn" style="display: none;">選択した動画を削除</button>
+          <button id="copy-btn" class="outline-btn" style="display: none;">URLをコピー</button>
+          <button id="clear-btn" class="ghost-btn" style="display: none;">結果をクリア</button>
+        </div>
+      </div>
+      <div id="results-list" class="results-list" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <script>
+    const actionSelect = document.getElementById('action-select');
+    const searchOptions = document.getElementById('search-options');
+    const searchForm = document.getElementById('search-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const loader = document.getElementById('loader');
+    const errorMessage = document.getElementById('error-message');
+    const resultsCount = document.getElementById('results-count');
+    const copyBtn = document.getElementById('copy-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const toggleSelectBtn = document.getElementById('toggle-select-btn');
+    const deleteSelectedBtn = document.getElementById('delete-selected-btn');
+    const resultsList = document.getElementById('results-list');
+
+    let currentResults = [];
+    let selectionMode = false;
+    const selectedUrls = new Set();
+
+    actionSelect.addEventListener('change', () => {
+      searchOptions.style.display = (actionSelect.value === 'search') ? 'grid' : 'none';
+    });
+
+    searchForm.addEventListener('submit', () => {
+      const action = actionSelect.value;
+      const channelId = document.getElementById('channel-id-input').value.trim();
+
+      if (!channelId) {
+        showErrorMsg('チャンネルIDを入力してください。');
+        return;
+      }
+
+      setLoadingState(true);
+
+      if (action === 'search') {
+        const keyword = document.getElementById('keyword-input').value.trim();
+        const dateAfter = document.getElementById('date-after-input').value;
+        const dateBefore = document.getElementById('date-before-input').value;
+
+        google.script.run
+          .withSuccessHandler(updateUI)
+          .withFailureHandler(handleError)
+          .searchVideosInChannel(channelId, keyword, dateAfter, dateBefore);
+      } else {
+        google.script.run
+          .withSuccessHandler(updateUI)
+          .withFailureHandler(handleError)
+          .getAllVideoUrlsFromChannelId(channelId);
+      }
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      const textToCopy = currentResults.map(video => video.url).join('\n');
+      if (!textToCopy) { return; }
+
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(textToCopy);
+        } else {
+          const tempInput = document.createElement('textarea');
+          tempInput.value = textToCopy;
+          tempInput.setAttribute('readonly', '');
+          tempInput.style.position = 'absolute';
+          tempInput.style.left = '-9999px';
+          document.body.appendChild(tempInput);
+          tempInput.select();
+          document.execCommand('copy');
+          document.body.removeChild(tempInput);
+        }
+        copyBtn.textContent = 'コピーしました！';
+      } catch (err) {
+        console.error('コピーに失敗しました: ', err);
+        copyBtn.textContent = 'コピー失敗';
+      }
+
+      setTimeout(() => {
+        copyBtn.textContent = 'URLをコピー';
+      }, 2200);
+    });
+
+    clearBtn.addEventListener('click', () => {
+      currentResults = [];
+      selectedUrls.clear();
+      selectionMode = false;
+      errorMessage.textContent = '';
+      refreshUI();
+    });
+
+    toggleSelectBtn.addEventListener('click', () => {
+      selectionMode = !selectionMode;
+      if (!selectionMode) {
+        selectedUrls.clear();
+      }
+      refreshUI();
+    });
+
+    deleteSelectedBtn.addEventListener('click', () => {
+      if (!selectedUrls.size) { return; }
+      currentResults = currentResults.filter(video => !selectedUrls.has(video.url));
+      selectedUrls.clear();
+      if (currentResults.length === 0) {
+        selectionMode = false;
+      }
+      refreshUI();
+    });
+
+    function updateUI(videos) {
+      currentResults = Array.isArray(videos) ? videos : [];
+      selectedUrls.clear();
+      selectionMode = false;
+      refreshUI();
+      setLoadingState(false);
+    }
+
+    function handleError(error) {
+      const message = (error && error.message)
+        ? error.message
+        : 'APIリクエストに失敗しました。詳細はログを確認してください。';
+      showErrorMsg(message);
+      currentResults = [];
+      selectedUrls.clear();
+      selectionMode = false;
+      refreshUI();
+      setLoadingState(false);
+    }
+
+    function renderResults(videos) {
+      resultsList.innerHTML = '';
+      if (!videos.length) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'placeholder';
+        placeholder.innerHTML = '<strong>まだ結果がありません。</strong><span>検索条件を入力して「動画を取得する」を押してください。</span>';
+        resultsList.appendChild(placeholder);
+        return;
+      }
+
+      videos.forEach(video => {
+        const card = document.createElement('article');
+        card.className = 'result-card';
+
+        const cardTop = document.createElement('div');
+        cardTop.className = 'card-top';
+        if (selectionMode) {
+          cardTop.classList.add('with-checkbox');
+        }
+
+        const checkboxWrapper = document.createElement('label');
+        checkboxWrapper.className = 'select-wrapper';
+        checkboxWrapper.style.display = selectionMode ? 'flex' : 'none';
+
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.className = 'select-checkbox';
+        checkbox.checked = selectedUrls.has(video.url);
+        checkbox.addEventListener('change', (event) => {
+          if (event.target.checked) {
+            selectedUrls.add(video.url);
+          } else {
+            selectedUrls.delete(video.url);
+          }
+          refreshSelectionControls();
+        });
+
+        checkboxWrapper.appendChild(checkbox);
+
+        const dismissBtn = document.createElement('button');
+        dismissBtn.type = 'button';
+        dismissBtn.className = 'dismiss-btn';
+        dismissBtn.setAttribute('aria-label', 'この動画を結果から除外');
+        dismissBtn.innerHTML = '&times;';
+        dismissBtn.addEventListener('click', () => {
+          removeVideoByUrl(video.url);
+        });
+
+        cardTop.appendChild(checkboxWrapper);
+        cardTop.appendChild(dismissBtn);
+        card.appendChild(cardTop);
+
+        const title = document.createElement('h3');
+        title.textContent = video.title || 'タイトル未取得';
+
+        const meta = document.createElement('div');
+        meta.className = 'result-meta';
+        meta.textContent = video.publishedAt ? new Date(video.publishedAt).toLocaleString() : '公開日情報なし';
+
+        const link = document.createElement('a');
+        link.href = video.url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.className = 'result-link';
+        link.textContent = '動画を開く';
+
+        card.appendChild(title);
+        card.appendChild(meta);
+        card.appendChild(link);
+        resultsList.appendChild(card);
+      });
+    }
+
+    function removeVideoByUrl(url) {
+      currentResults = currentResults.filter(video => video.url !== url);
+      selectedUrls.delete(url);
+      if (currentResults.length === 0) {
+        selectionMode = false;
+      }
+      refreshUI();
+    }
+
+    function showErrorMsg(message) {
+      errorMessage.textContent = message || '';
+    }
+
+    function setLoadingState(isLoading) {
+      submitBtn.disabled = isLoading;
+      loader.style.display = isLoading ? 'inline-block' : 'none';
+      [copyBtn, clearBtn, toggleSelectBtn, deleteSelectedBtn].forEach(btn => {
+        if (btn) { btn.disabled = isLoading; }
+      });
+      if (isLoading) {
+        showErrorMsg('');
+      }
+    }
+
+    function refreshUI() {
+      const hasResults = currentResults.length > 0;
+      resultsCount.textContent = hasResults ? `${currentResults.length}件` : '0件';
+      renderResults(currentResults);
+
+      copyBtn.style.display = hasResults ? 'inline-flex' : 'none';
+      if (!hasResults) {
+        copyBtn.textContent = 'URLをコピー';
+      }
+      clearBtn.style.display = hasResults ? 'inline-flex' : 'none';
+      toggleSelectBtn.style.display = hasResults ? 'inline-flex' : 'none';
+      toggleSelectBtn.textContent = selectionMode ? '選択解除' : '選択モード';
+
+      refreshSelectionControls();
+    }
+
+    function refreshSelectionControls() {
+      deleteSelectedBtn.style.display = (selectionMode && selectedUrls.size > 0) ? 'inline-flex' : 'none';
+
+      // update checkbox visibility after display toggles
+      const wrappers = resultsList.querySelectorAll('.select-wrapper');
+      wrappers.forEach(wrapper => {
+        wrapper.style.display = selectionMode ? 'flex' : 'none';
+        const cardTop = wrapper.parentElement;
+        if (cardTop) {
+          if (selectionMode) {
+            cardTop.classList.add('with-checkbox');
+          } else {
+            cardTop.classList.remove('with-checkbox');
+          }
+        }
+      });
+    }
+
+    refreshUI();
+  </script>
+</body>
+</html>
