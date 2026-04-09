@@ -37,7 +37,7 @@
 
     .container {
       width: 100%;
-      max-width: 880px;
+      max-width: 980px;
       background: var(--card-bg);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow);
@@ -55,7 +55,10 @@
       opacity: 0.8;
     }
 
-    .container > * { position: relative; z-index: 1; }
+    .container > * {
+      position: relative;
+      z-index: 1;
+    }
 
     header {
       display: flex;
@@ -75,9 +78,9 @@
     header p {
       margin: 0;
       color: var(--text-sub);
-      max-width: 520px;
+      max-width: 680px;
       font-size: 0.95rem;
-      line-height: 1.6;
+      line-height: 1.7;
     }
 
     form {
@@ -101,7 +104,7 @@
       grid-column: 1 / -1;
     }
 
-    #search-options {
+    #keyword-options {
       display: grid;
       gap: 18px;
     }
@@ -125,6 +128,7 @@
 
     input[type="text"],
     input[type="date"],
+    input[type="number"],
     select {
       width: 100%;
       padding: 13px 16px;
@@ -142,10 +146,16 @@
       box-shadow: 0 0 0 4px var(--accent-soft);
     }
 
-    .date-range-group {
+    .range-group {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
       gap: 18px;
+    }
+
+    .field-hint {
+      color: var(--text-sub);
+      font-size: 0.82rem;
+      line-height: 1.6;
     }
 
     .actions {
@@ -263,7 +273,7 @@
 
     .results-list {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
       gap: 18px;
       min-height: 160px;
     }
@@ -336,16 +346,46 @@
       font-weight: 600;
       color: var(--text-main);
       word-break: break-word;
+      line-height: 1.55;
     }
 
     .result-meta {
-      font-size: 0.8rem;
-      color: var(--text-sub);
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
       display: flex;
-      gap: 8px;
+      flex-wrap: wrap;
+      gap: 8px 10px;
+      color: var(--text-sub);
+      font-size: 0.84rem;
+    }
+
+    .meta-item {
+      display: inline-flex;
       align-items: center;
+      gap: 6px;
+      padding: 4px 0;
+    }
+
+    .result-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .stat-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: #fff;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .stat-pill strong {
+      color: var(--accent-dark);
+      font-weight: 700;
     }
 
     .result-link {
@@ -411,46 +451,100 @@
   <div class="container">
     <header>
       <h1>YouTube URL Getter</h1>
-      <p>チャンネルの動画URLとタイトルを素早く収集。キーワードや公開日に基づくフィルタで、目的の動画をピンポイントに見つけましょう。</p>
+      <p>チャンネルIDがなくても、検索キーワードだけでYouTube全体を横断リサーチできます。公開期間、再生数、高評価数、並び順、取得件数を指定して、狙った動画のURLをまとめて取得できます。</p>
     </header>
 
     <form id="search-form" onsubmit="return false;">
       <div class="form-group">
         <label for="action-select">実行するアクション</label>
         <select id="action-select">
-          <option value="search">キーワードと公開日で検索</option>
-          <option value="all">チャンネルの全動画を取得</option>
+          <option value="search">キーワードで動画をリサーチ</option>
+          <option value="all">チャンネルの全動画を取得して絞り込む</option>
         </select>
       </div>
 
       <div class="form-group">
-        <label for="channel-id-input">チャンネルID <small>required</small></label>
+        <label for="channel-id-input">チャンネルID <small id="channel-requirement">optional</small></label>
         <input type="text" id="channel-id-input" value="UCVAkt5l6kD4igMdVoEGTGIg" placeholder="例: UCxxxxxxxxxxxx">
+        <span id="channel-hint" class="field-hint">空欄ならYouTube全体から検索します。全動画取得では必須です。</span>
       </div>
 
-      <div id="search-options" class="form-group full-row">
+      <div id="keyword-options" class="form-group full-row">
         <div class="form-group">
-          <label for="keyword-input">検索キーワード</label>
-          <input type="text" id="keyword-input" placeholder="例: 首こり, テクニック">
+          <label for="keyword-input">検索キーワード <small id="keyword-requirement">recommended</small></label>
+          <input type="text" id="keyword-input" placeholder="例: 首こり ストレッチ, 肩こり -shorts">
+          <span class="field-hint">チャンネルIDなしのときは必須です。YouTube API準拠の除外ワードや OR 検索も使えます。</span>
         </div>
-        <div class="form-group">
-          <label>公開日で絞り込み</label>
-          <div class="date-range-group">
-            <div>
-              <label for="date-after-input">開始日</label>
-              <input type="date" id="date-after-input">
-            </div>
-            <div>
-              <label for="date-before-input">終了日</label>
-              <input type="date" id="date-before-input">
-            </div>
+      </div>
+
+      <div class="form-group">
+        <label for="sort-order-select">並び順</label>
+        <select id="sort-order-select">
+          <option value="relevance" data-search-only="true">関連度順</option>
+          <option value="date">公開日順</option>
+          <option value="viewCount">再生数順</option>
+          <option value="title">タイトル順</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="max-results-select">取得件数</label>
+        <select id="max-results-select">
+          <option value="10">10件</option>
+          <option value="25" selected>25件</option>
+          <option value="50">50件</option>
+          <option value="100">100件</option>
+          <option value="200">200件</option>
+        </select>
+        <span class="field-hint">条件が厳しい場合は、YouTube APIの上限内で追加ページも探索します。</span>
+      </div>
+
+      <div class="form-group full-row">
+        <label>公開期間で絞り込み</label>
+        <div class="range-group">
+          <div>
+            <label for="date-after-input">開始日</label>
+            <input type="date" id="date-after-input">
+          </div>
+          <div>
+            <label for="date-before-input">終了日</label>
+            <input type="date" id="date-before-input">
           </div>
         </div>
       </div>
 
+      <div class="form-group full-row">
+        <label>再生数で絞り込み</label>
+        <div class="range-group">
+          <div>
+            <label for="min-views-input">最小再生数</label>
+            <input type="number" id="min-views-input" min="0" step="1" placeholder="例: 10000">
+          </div>
+          <div>
+            <label for="max-views-input">最大再生数</label>
+            <input type="number" id="max-views-input" min="0" step="1" placeholder="例: 500000">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-group full-row">
+        <label>高評価数で絞り込み</label>
+        <div class="range-group">
+          <div>
+            <label for="min-likes-input">最小高評価数</label>
+            <input type="number" id="min-likes-input" min="0" step="1" placeholder="例: 100">
+          </div>
+          <div>
+            <label for="max-likes-input">最大高評価数</label>
+            <input type="number" id="max-likes-input" min="0" step="1" placeholder="例: 5000">
+          </div>
+        </div>
+        <span class="field-hint">高評価数が非公開の動画は、高評価条件を指定した場合に候補から外れます。</span>
+      </div>
+
       <div class="actions">
         <button id="submit-btn" class="submit-btn" type="submit">動画を取得する</button>
-        <span id="loader">取得中です…。少々お待ちください。</span>
+        <span id="loader">取得中です…。条件が多いほど少し時間がかかります。</span>
       </div>
     </form>
 
@@ -473,7 +567,20 @@
 
   <script>
     const actionSelect = document.getElementById('action-select');
-    const searchOptions = document.getElementById('search-options');
+    const channelIdInput = document.getElementById('channel-id-input');
+    const channelRequirement = document.getElementById('channel-requirement');
+    const keywordRequirement = document.getElementById('keyword-requirement');
+    const keywordOptions = document.getElementById('keyword-options');
+    const keywordInput = document.getElementById('keyword-input');
+    const sortOrderSelect = document.getElementById('sort-order-select');
+    const maxResultsSelect = document.getElementById('max-results-select');
+    const dateAfterInput = document.getElementById('date-after-input');
+    const dateBeforeInput = document.getElementById('date-before-input');
+    const minViewsInput = document.getElementById('min-views-input');
+    const maxViewsInput = document.getElementById('max-views-input');
+    const minLikesInput = document.getElementById('min-likes-input');
+    const maxLikesInput = document.getElementById('max-likes-input');
+
     const searchForm = document.getElementById('search-form');
     const submitBtn = document.getElementById('submit-btn');
     const loader = document.getElementById('loader');
@@ -489,41 +596,38 @@
     let selectionMode = false;
     const selectedUrls = new Set();
 
-    actionSelect.addEventListener('change', () => {
-      searchOptions.style.display = (actionSelect.value === 'search') ? 'grid' : 'none';
-    });
+    actionSelect.addEventListener('change', syncActionUI);
 
     searchForm.addEventListener('submit', () => {
-      const action = actionSelect.value;
-      const channelId = document.getElementById('channel-id-input').value.trim();
+      const request = collectRequestValues();
+      const validationMessage = validateRequest(request);
 
-      if (!channelId) {
-        showErrorMsg('チャンネルIDを入力してください。');
+      if (validationMessage) {
+        showErrorMsg(validationMessage);
         return;
       }
 
       setLoadingState(true);
 
-      if (action === 'search') {
-        const keyword = document.getElementById('keyword-input').value.trim();
-        const dateAfter = document.getElementById('date-after-input').value;
-        const dateBefore = document.getElementById('date-before-input').value;
-
+      if (request.action === 'search') {
         google.script.run
           .withSuccessHandler(updateUI)
           .withFailureHandler(handleError)
-          .searchVideosInChannel(channelId, keyword, dateAfter, dateBefore);
-      } else {
-        google.script.run
-          .withSuccessHandler(updateUI)
-          .withFailureHandler(handleError)
-          .getAllVideoUrlsFromChannelId(channelId);
+          .searchYouTubeVideos(buildServerOptions(request));
+        return;
       }
+
+      google.script.run
+        .withSuccessHandler(updateUI)
+        .withFailureHandler(handleError)
+        .getAllVideoUrlsFromChannelId(request.channelId, buildServerOptions(request));
     });
 
     copyBtn.addEventListener('click', async () => {
       const textToCopy = currentResults.map(video => video.url).join('\n');
-      if (!textToCopy) { return; }
+      if (!textToCopy) {
+        return;
+      }
 
       try {
         if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -567,14 +671,114 @@
     });
 
     deleteSelectedBtn.addEventListener('click', () => {
-      if (!selectedUrls.size) { return; }
+      if (!selectedUrls.size) {
+        return;
+      }
       currentResults = currentResults.filter(video => !selectedUrls.has(video.url));
       selectedUrls.clear();
-      if (currentResults.length === 0) {
+      if (!currentResults.length) {
         selectionMode = false;
       }
       refreshUI();
     });
+
+    function syncActionUI() {
+      const isSearch = actionSelect.value === 'search';
+      keywordOptions.style.display = isSearch ? 'grid' : 'none';
+      channelRequirement.textContent = isSearch ? 'optional' : 'required';
+      keywordRequirement.textContent = isSearch ? 'recommended' : 'disabled';
+
+      Array.from(sortOrderSelect.options).forEach(option => {
+        const searchOnly = option.dataset.searchOnly === 'true';
+        option.disabled = !isSearch && searchOnly;
+        option.hidden = !isSearch && searchOnly;
+      });
+
+      if (!isSearch && sortOrderSelect.value === 'relevance') {
+        sortOrderSelect.value = 'date';
+      }
+    }
+
+    function collectRequestValues() {
+      return {
+        action: actionSelect.value,
+        channelId: channelIdInput.value.trim(),
+        searchQuery: keywordInput.value.trim(),
+        publishedAfter: dateAfterInput.value,
+        publishedBefore: dateBeforeInput.value,
+        minViews: parseOptionalInteger(minViewsInput.value),
+        maxViews: parseOptionalInteger(maxViewsInput.value),
+        minLikes: parseOptionalInteger(minLikesInput.value),
+        maxLikes: parseOptionalInteger(maxLikesInput.value),
+        order: sortOrderSelect.value,
+        maxResults: parseOptionalInteger(maxResultsSelect.value)
+      };
+    }
+
+    function buildServerOptions(request) {
+      return {
+        channelId: request.channelId,
+        searchQuery: request.searchQuery,
+        publishedAfter: request.publishedAfter,
+        publishedBefore: request.publishedBefore,
+        minViews: request.minViews,
+        maxViews: request.maxViews,
+        minLikes: request.minLikes,
+        maxLikes: request.maxLikes,
+        order: request.order,
+        maxResults: request.maxResults
+      };
+    }
+
+    function validateRequest(request) {
+      if (request.action === 'all' && !request.channelId) {
+        return 'チャンネルの全動画を取得する場合は、チャンネルIDを入力してください。';
+      }
+
+      if (request.action === 'search' && !request.channelId && !request.searchQuery) {
+        return 'YouTube全体を検索する場合は、検索キーワードを入力してください。';
+      }
+
+      if (request.publishedAfter && request.publishedBefore && request.publishedAfter > request.publishedBefore) {
+        return '開始日は終了日以前にしてください。';
+      }
+
+      const numericError = validateNumericRange(request.minViews, request.maxViews, '再生数')
+        || validateNumericRange(request.minLikes, request.maxLikes, '高評価数');
+
+      if (numericError) {
+        return numericError;
+      }
+
+      return '';
+    }
+
+    function validateNumericRange(minValue, maxValue, label) {
+      if (Number.isNaN(minValue) || Number.isNaN(maxValue)) {
+        return `${label}は0以上の整数で入力してください。`;
+      }
+      if (minValue !== null && minValue < 0) {
+        return `${label}は0以上の整数で入力してください。`;
+      }
+      if (maxValue !== null && maxValue < 0) {
+        return `${label}は0以上の整数で入力してください。`;
+      }
+      if (minValue !== null && maxValue !== null && minValue > maxValue) {
+        return `${label}の最小値は最大値以下にしてください。`;
+      }
+      return '';
+    }
+
+    function parseOptionalInteger(value) {
+      if (value === '' || value === null || value === undefined) {
+        return null;
+      }
+      const numericValue = Number(value);
+      if (!Number.isFinite(numericValue) || Math.floor(numericValue) !== numericValue) {
+        return NaN;
+      }
+      return numericValue;
+    }
 
     function updateUI(videos) {
       currentResults = Array.isArray(videos) ? videos : [];
@@ -598,6 +802,7 @@
 
     function renderResults(videos) {
       resultsList.innerHTML = '';
+
       if (!videos.length) {
         const placeholder = document.createElement('div');
         placeholder.className = 'placeholder';
@@ -624,7 +829,7 @@
         checkbox.type = 'checkbox';
         checkbox.className = 'select-checkbox';
         checkbox.checked = selectedUrls.has(video.url);
-        checkbox.addEventListener('change', (event) => {
+        checkbox.addEventListener('change', event => {
           if (event.target.checked) {
             selectedUrls.add(video.url);
           } else {
@@ -653,7 +858,18 @@
 
         const meta = document.createElement('div');
         meta.className = 'result-meta';
-        meta.textContent = video.publishedAt ? new Date(video.publishedAt).toLocaleString() : '公開日情報なし';
+        meta.appendChild(createMetaItem(formatDateTime(video.publishedAt) || '公開日情報なし'));
+        if (video.channelTitle) {
+          meta.appendChild(createMetaItem(video.channelTitle));
+        }
+
+        const stats = document.createElement('div');
+        stats.className = 'result-stats';
+        stats.appendChild(createStatPill('再生', formatCount(video.viewCount)));
+        stats.appendChild(createStatPill('高評価', video.likeCount === null ? '非公開' : formatCount(video.likeCount)));
+        if (video.commentCount !== null) {
+          stats.appendChild(createStatPill('コメント', formatCount(video.commentCount)));
+        }
 
         const link = document.createElement('a');
         link.href = video.url;
@@ -664,15 +880,56 @@
 
         card.appendChild(title);
         card.appendChild(meta);
+        card.appendChild(stats);
         card.appendChild(link);
         resultsList.appendChild(card);
       });
     }
 
+    function createMetaItem(text) {
+      const item = document.createElement('span');
+      item.className = 'meta-item';
+      item.textContent = text;
+      return item;
+    }
+
+    function createStatPill(label, value) {
+      const pill = document.createElement('span');
+      pill.className = 'stat-pill';
+      pill.innerHTML = `${label} <strong>${value}</strong>`;
+      return pill;
+    }
+
+    function formatDateTime(value) {
+      if (!value) {
+        return '';
+      }
+
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) {
+        return '';
+      }
+
+      return date.toLocaleString('ja-JP', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+
+    function formatCount(value) {
+      if (value === null || value === undefined || Number.isNaN(Number(value))) {
+        return '-';
+      }
+      return new Intl.NumberFormat('ja-JP').format(Number(value));
+    }
+
     function removeVideoByUrl(url) {
       currentResults = currentResults.filter(video => video.url !== url);
       selectedUrls.delete(url);
-      if (currentResults.length === 0) {
+      if (!currentResults.length) {
         selectionMode = false;
       }
       refreshUI();
@@ -686,7 +943,9 @@
       submitBtn.disabled = isLoading;
       loader.style.display = isLoading ? 'inline-block' : 'none';
       [copyBtn, clearBtn, toggleSelectBtn, deleteSelectedBtn].forEach(btn => {
-        if (btn) { btn.disabled = isLoading; }
+        if (btn) {
+          btn.disabled = isLoading;
+        }
       });
       if (isLoading) {
         showErrorMsg('');
@@ -712,7 +971,6 @@
     function refreshSelectionControls() {
       deleteSelectedBtn.style.display = (selectionMode && selectedUrls.size > 0) ? 'inline-flex' : 'none';
 
-      // update checkbox visibility after display toggles
       const wrappers = resultsList.querySelectorAll('.select-wrapper');
       wrappers.forEach(wrapper => {
         wrapper.style.display = selectionMode ? 'flex' : 'none';
@@ -727,6 +985,7 @@
       });
     }
 
+    syncActionUI();
     refreshUI();
   </script>
 </body>
