@@ -92,7 +92,7 @@ const SEARCH_PROFILES = [
 
 function doGet() {
   return HtmlService.createHtmlOutputFromFile('index')
-    .setTitle('YouTube URL Getter');
+    .setTitle('YouTube URL Research v2');
 }
 
 // =================================================================
